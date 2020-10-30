@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.url.shorter.api.pojo.BaseResponse;
 import com.url.shorter.api.pojo.UrlRequest;
-import com.url.shorter.api.pojo.UrlResponse;
 import com.url.shorter.api.service.UrlService;
 
 @RestController
@@ -21,7 +20,7 @@ public class UrlController {
 	private UrlService urlService;
 
 	@PostMapping(path = "/createShortUrl")
-	public BaseResponse<UrlResponse> createShortUrl(@RequestBody UrlRequest request) throws RuntimeException {
+	public BaseResponse<String> createShortUrl(@RequestBody UrlRequest request) throws RuntimeException {
 		return new BaseResponse<>("success", false, urlService.createShortUrl(request));
 	}
 

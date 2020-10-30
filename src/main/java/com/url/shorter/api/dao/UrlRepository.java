@@ -10,8 +10,9 @@ import org.springframework.stereotype.Repository;
 import com.url.shorter.api.entity.UrlEntity;
 
 @Repository
-public interface UrlRepository extends JpaRepository<UrlEntity, Integer> {
+public interface UrlRepository extends JpaRepository<UrlEntity, String> {
 	UrlEntity findByShortUrl(String shortUrl);
+	UrlEntity findByLongUrl(String shortUrl);
 
 	@Query(value = "Select u.totalVisit from UrlEntity u where u.shortUrl = :url")
 	Long findTotalVisit(@Param("url") String shortUrl);

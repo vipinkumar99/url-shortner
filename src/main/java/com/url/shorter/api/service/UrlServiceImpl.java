@@ -11,7 +11,6 @@ import com.url.shorter.api.dao.UrlRepository;
 import com.url.shorter.api.entity.UrlEntity;
 import com.url.shorter.api.exception.UrlException;
 import com.url.shorter.api.pojo.UrlRequest;
-import com.url.shorter.api.pojo.UrlResponse;
 
 @Service
 public class UrlServiceImpl implements UrlService {
@@ -20,26 +19,36 @@ public class UrlServiceImpl implements UrlService {
 	private UrlRepository urlRepository;
 
 	@Override
-	public UrlResponse createShortUrl(UrlRequest request) throws RuntimeException {
+	public String createShortUrl(UrlRequest request) throws RuntimeException {
+		System.out.println("service is called");
 		if (request == null) {
 			throw new UrlException("Request body is empty!");
 		}
 		if (!request.getLongUrl().startsWith("http") || request.getLongUrl().startsWith("/https")) {
 			throw new UrlException("Url is not valid!");
 		}
-		
-		UrlEntity entity = new UrlEntity();
-		entity.setLongUrl(request.getLongUrl());
-		entity.setExpired(false);
-		entity.setShortUrl(UUID.randomUUID().toString().replaceAll("-", ""));
-		entity.setTotalVisit(0l);
-		entity.setExpiredAt(LocalDateTime.now().plusMinutes(15));
-		urlRepository.save(entity);
-
-		UrlResponse response = new UrlResponse();
-		response.setLongUrl(entity.getLongUrl());
-		response.setShortUrl(entity.getShortUrl());
-		return response;
+		UrlEntity entity = urlRepository.findByLongUrl(request.getLongUrl());
+		if (entity != null) {
+			if (!entity.getExpired() && LocalDateTime.now().isBefore(entity.getExpiredAt())) {
+				return entity.getShortUrl();
+			}
+			if (entity.getExpired() || LocalDateTime.now().isAfter(entity.getExpiredAt())) {
+				entity.setExpired(false);
+			}
+			entity.setShortUrl(getUrl());
+			entity.setExpiredAt(getExpireTime());
+			urlRepository.save(entity);
+			return entity.getShortUrl();
+		} else {
+			entity = new UrlEntity();
+			entity.setLongUrl(request.getLongUrl());
+			entity.setTotalVisit(0l);
+			entity.setExpired(false);
+			entity.setShortUrl(getUrl());
+			entity.setExpiredAt(getExpireTime());
+			urlRepository.save(entity);
+			return entity.getShortUrl();
+		}
 	}
 
 	@Override
@@ -67,4 +76,11 @@ public class UrlServiceImpl implements UrlService {
 		return totalVisit == null ? 0l : totalVisit;
 	}
 
+	private String getUrl() {
+		return UUID.randomUUID().toString().replaceAll("-", "");
+	}
+
+	private LocalDateTime getExpireTime() {
+		return LocalDateTime.now().plusMinutes(5);
+	}
 }
